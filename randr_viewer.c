@@ -46,66 +46,56 @@ print_randr(void)
     XRRCrtcInfo *ci;
 
     printf("print_randr: in\n");
-
     sc = XRRGetScreenInfo(g_disp, g_root_window);
     if (sc == NULL)
     {
         printf("XRRGetScreenInfo return nil\n");
-        return 1;
     }
-    printf("  XRRGetScreenInfo return ok\n");
-
-    rot = XRRConfigRotations(sc, &cur_rot);
-    printf("    XRRConfigRotations rotation 0x%4.4x current rotation 0x%4.4x\n", rot, cur_rot);
-
-    time = XRRConfigTimes(sc, &config_time);
-    printf("    XRRConfigTimes time 0x%8.8x config time 0x%8.8x\n", (int)time, (int)config_time);
-
-    sizes = XRRConfigSizes(sc, &nsizes);
-    printf("    XRRConfigSizes nsizes %d sizes %p\n", nsizes, sizes);
-    if (sizes != NULL)
+    else
     {
-        for (index = 0; index < nsizes; index++)
+        printf("  XRRGetScreenInfo return ok\n");
+        rot = XRRConfigRotations(sc, &cur_rot);
+        printf("    XRRConfigRotations rotation 0x%4.4x current rotation 0x%4.4x\n", rot, cur_rot);
+        time = XRRConfigTimes(sc, &config_time);
+        printf("    XRRConfigTimes time 0x%8.8x config time 0x%8.8x\n", (int)time, (int)config_time);
+        sizes = XRRConfigSizes(sc, &nsizes);
+        printf("    XRRConfigSizes nsizes %d sizes %p\n", nsizes, sizes);
+        if (sizes != NULL)
         {
-            printf("      index %d width %d height %d mwidth %d mheight %d\n",
-                   index,
-                   sizes[index].width, sizes[index].height,
-                   sizes[index].mwidth, sizes[index].mheight);
-            rates = XRRConfigRates(sc, index, &nrates);
-            printf("      XRRConfigRates nrates %d rates %p\n", nrates, rates);
-            if (rates != NULL)
+            for (index = 0; index < nsizes; index++)
             {
-                for (jndex = 0; jndex < nrates; jndex++)
+                printf("      index %d width %d height %d mwidth %d mheight %d\n",
+                       index,
+                       sizes[index].width, sizes[index].height,
+                       sizes[index].mwidth, sizes[index].mheight);
+                rates = XRRConfigRates(sc, index, &nrates);
+                printf("      XRRConfigRates nrates %d rates %p\n", nrates, rates);
+                if (rates != NULL)
                 {
-                    printf("        index %d rate 0x%4.4x\n", jndex, rates[jndex]);
-
+                    for (jndex = 0; jndex < nrates; jndex++)
+                    {
+                        printf("        index %d rate 0x%4.4x\n", jndex, rates[jndex]);
+                    }
                 }
             }
         }
+        sizeid = XRRConfigCurrentConfiguration(sc, &rot);
+        printf("    XRRConfigCurrentConfiguration sizeid 0x%4.4x rotation 0x%4.4x\n", sizeid, rot);
+        rate = XRRConfigCurrentRate(sc);
+        printf("    XRRConfigCurrentRate rate 0x%4.4x\n", rate);
+        XRRFreeScreenConfigInfo(sc);
     }
-
-    sizeid = XRRConfigCurrentConfiguration(sc, &rot);
-    printf("    XRRConfigCurrentConfiguration sizeid 0x%4.4x rotation 0x%4.4x\n", sizeid, rot);
-
-    rate = XRRConfigCurrentRate(sc);
-    printf("    XRRConfigCurrentRate rate 0x%4.4x\n", rate);
-
-    XRRFreeScreenConfigInfo(sc);
-
     rr_screen = XRRRootToScreen(g_disp, g_root_window);
     printf("  XRRRootToScreen for root window returns %d\n", rr_screen);
-
     rot = XRRRotations(g_disp, rr_screen, &cur_rot);
     printf("  XRRRotations rotation 0x%4.4x current rotation 0x%4.4x\n", rot, cur_rot);
-
     sizes = XRRSizes(g_disp, rr_screen, &nsizes);
     printf("  XRRSizes nsizes %d sizes %p\n", nsizes, sizes);
     if (sizes != NULL)
     {
         for (index = 0; index < nsizes; index++)
         {
-            printf("    index %d width %d height %d mwidth %d mheight %d\n",
-                   index,
+            printf("    index %d width %d height %d mwidth %d mheight %d\n", index,
                    sizes[index].width, sizes[index].height,
                    sizes[index].mwidth, sizes[index].mheight);
             rates = XRRRates(g_disp, rr_screen, index, &nrates);
@@ -120,94 +110,88 @@ print_randr(void)
             }
         }
     }
-
     time = XRRTimes(g_disp, rr_screen, &config_time);
     printf("  XRRTimes time 0x%8.8x config time 0x%8.8x\n", (int)time, (int)config_time);
-
     st = XRRGetScreenSizeRange(g_disp, g_root_window, &min_width, &min_height, &max_width, &max_height);
     printf("  XRRGetScreenSizeRange status %d min_width %d min_height %d, max_width %d max_height %d\n",
            st, min_width, min_height, max_width, max_height);
-
     sr = XRRGetScreenResources(g_disp, g_root_window);
     if (sr == NULL)
     {
         printf("XRRGetScreenResources return nil\n");
-        return 1;
     }
-    printf("  XRRGetScreenResources return ok time 0x%8.8x config time 0x%8.8x ncrtc %d noutput %d nmode %d\n",
-           (int)sr->timestamp, (int)sr->configTimestamp, sr->ncrtc, sr->noutput, sr->nmode);
-
-    for (index = 0; index <sr->nmode; index++)
+    else
     {
-        printf("    mode index %d ID 0x%4.4x width %d height %d dotClock %ld hSyncStart %d hSyncEnd %d\n"
-               "         hTotal %d hSkew %d vSyncStart %d vSyncEnd %d vTotal %d name %s nameLength %d\n"
-               "         modeFlags 0x%8.8x\n",
-               index, (int)sr->modes[index].id,
-               sr->modes[index].width, sr->modes[index].height, sr->modes[index].dotClock,
-               sr->modes[index].hSyncStart, sr->modes[index].hSyncEnd, sr->modes[index].hTotal,
-               sr->modes[index].hSkew, sr->modes[index].vSyncStart, sr->modes[index].vSyncEnd,
-               sr->modes[index].vTotal, sr->modes[index].name, sr->modes[index].nameLength,
-               (int)sr->modes[index].modeFlags);
+        printf("  XRRGetScreenResources return ok time 0x%8.8x config time 0x%8.8x ncrtc %d noutput %d nmode %d\n",
+               (int)sr->timestamp, (int)sr->configTimestamp, sr->ncrtc, sr->noutput, sr->nmode);
+        for (index = 0; index <sr->nmode; index++)
+        {
+            printf("    mode index %d ID 0x%4.4x width %d height %d dotClock %ld hSyncStart %d hSyncEnd %d\n"
+                   "         hTotal %d hSkew %d vSyncStart %d vSyncEnd %d vTotal %d name %s nameLength %d\n"
+                   "         modeFlags 0x%8.8x\n",
+                   index, (int)sr->modes[index].id,
+                   sr->modes[index].width, sr->modes[index].height, sr->modes[index].dotClock,
+                   sr->modes[index].hSyncStart, sr->modes[index].hSyncEnd, sr->modes[index].hTotal,
+                   sr->modes[index].hSkew, sr->modes[index].vSyncStart, sr->modes[index].vSyncEnd,
+                   sr->modes[index].vTotal, sr->modes[index].name, sr->modes[index].nameLength,
+                   (int)sr->modes[index].modeFlags);
+        }
+        for (index = 0; index < sr->noutput; index++)
+        {
+            oi = XRRGetOutputInfo(g_disp, sr, sr->outputs[index]);
+            if (oi == NULL)
+            {
+                printf("    XRRGetOutputInfo return nil\n");
+            }
+            else
+            {
+                printf("    XRRGetOutputInfo index %d ID 0x%4.4x time 0x%8.8x crtc 0x%4.4x name %s mm_width %d mm_height %d\n"
+                       "                     connection 0x%4.4x subpixel_order 0x%4.4x ncrtc %d nclone %d nmode %d npreferred %d\n",
+                       index, (int)sr->outputs[index], (int)oi->timestamp, (int)oi->crtc, oi->name,
+                       (int)oi->mm_width, (int)oi->mm_height, oi->connection,
+                       oi->subpixel_order, oi->ncrtc, oi->nclone, oi->nmode, oi->npreferred);
+                for (jndex = 0; jndex < oi->ncrtc; jndex++)
+                {
+                    printf("      crtc index %d ID 0x%4.4x\n", jndex, (int)oi->crtcs[jndex]);
+                }
+                for (jndex = 0; jndex < oi->nclone; jndex++)
+                {
+                    printf("      clone index %d ID 0x%4.4x\n", jndex, (int)oi->clones[jndex]);
+                }
+                for (jndex = 0; jndex < oi->nmode; jndex++)
+                {
+                    printf("      mode index %d ID 0x%4.4x\n", jndex, (int)oi->modes[jndex]);
+                }
+                XRRFreeOutputInfo(oi);
+            }
+        }
+        for (index = 0; index <sr->ncrtc; index++)
+        {
+            ci = XRRGetCrtcInfo(g_disp, sr, sr->crtcs[index]);
+            if (ci == NULL)
+            {
+                printf("    XRRGetCrtcInfo return nil\n");
+            }
+            else
+            {
+                printf("    XRRGetCrtcInfo index %d ID 0x%4.4x time 0x%8.8x x %d y %d width %d height %d mode 0x%4.4x\n"
+                       "                   rotation 0x%4.4x noutput %d rotations 0x%4.4x npossible %d\n",
+                       index, (int)sr->crtcs[index], (int)ci->timestamp,
+                       ci->x, ci->y, ci->width, ci->height, (int)ci->mode,
+                       ci->rotation, ci->noutput, (int)ci->rotations, ci->npossible);
+                for (jndex = 0; jndex < ci->noutput; jndex++)
+                {
+                    printf("      output index %d ID 0x%4.4x\n", jndex, (int)ci->outputs[jndex]);
+                }
+                for (jndex = 0; jndex < ci->npossible; jndex++)
+                {
+                    printf("      possibe index %d ID 0x%4.4x\n", jndex, (int)ci->possible[jndex]);
+                }
+                XRRFreeCrtcInfo(ci);
+            }
+        }
+        XRRFreeScreenResources(sr);
     }
-
-    for (index = 0; index < sr->noutput; index++)
-    {
-        oi = XRRGetOutputInfo(g_disp, sr, sr->outputs[index]);
-        if (oi != NULL)
-        {
-            printf("    XRRGetOutputInfo index %d ID 0x%4.4x time 0x%8.8x crtc 0x%4.4x name %s mm_width %d mm_height %d\n"
-                   "                     connection 0x%4.4x subpixel_order 0x%4.4x ncrtc %d nclone %d nmode %d npreferred %d\n",
-                   index, (int)sr->outputs[index], (int)oi->timestamp, (int)oi->crtc, oi->name,
-                   (int)oi->mm_width, (int)oi->mm_height, oi->connection,
-                   oi->subpixel_order, oi->ncrtc, oi->nclone, oi->nmode, oi->npreferred);
-            for (jndex = 0; jndex < oi->ncrtc; jndex++)
-            {
-                printf("      crtc index %d ID 0x%4.4x\n", jndex, (int)oi->crtcs[jndex]);
-            }
-            for (jndex = 0; jndex < oi->nclone; jndex++)
-            {
-                printf("      clone index %d ID 0x%4.4x\n", jndex, (int)oi->clones[jndex]);
-            }
-            for (jndex = 0; jndex < oi->nmode; jndex++)
-            {
-                printf("      mode index %d ID 0x%4.4x\n", jndex, (int)oi->modes[jndex]);
-            }
-            XRRFreeOutputInfo(oi);
-        }
-        else
-        {
-            printf("    XRRGetOutputInfo return nil\n");
-        }
-    }
-
-    for (index = 0; index <sr->ncrtc; index++)
-    {
-        ci = XRRGetCrtcInfo(g_disp, sr, sr->crtcs[index]);
-        if (ci != NULL)
-        {
-            printf("    XRRGetCrtcInfo index %d ID 0x%4.4x time 0x%8.8x x %d y %d width %d height %d mode 0x%4.4x\n"
-                   "                   rotation 0x%4.4x noutput %d rotations 0x%4.4x npossible %d\n",
-                   index, (int)sr->crtcs[index], (int)ci->timestamp,
-                   ci->x, ci->y, ci->width, ci->height, (int)ci->mode,
-                   ci->rotation, ci->noutput, (int)ci->rotations, ci->npossible);
-            for (jndex = 0; jndex < ci->noutput; jndex++)
-            {
-                printf("      output index %d ID 0x%4.4x\n", jndex, (int)ci->outputs[jndex]);
-            }
-            for (jndex = 0; jndex < ci->npossible; jndex++)
-            {
-                printf("      possibe index %d ID 0x%4.4x\n", jndex, (int)ci->possible[jndex]);
-            }
-            XRRFreeCrtcInfo(ci);
-        }
-        else
-        {
-            printf("    XRRGetCrtcInfo return nil\n");
-        }
-    }
-
-    XRRFreeScreenResources(sr);
-
     printf("print_randr: out\n");
     return 0;
 }
