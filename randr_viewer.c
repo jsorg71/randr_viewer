@@ -200,6 +200,10 @@ static int
 process_randr(XEvent *ev)
 {
     XRRScreenChangeNotifyEvent *rr_screen_change_notify;
+    XRRNotifyEvent *rr_notify_event;
+    XRRCrtcChangeNotifyEvent *rr_crtc_change_notify;
+    XRROutputChangeNotifyEvent *rr_output_change_notify;
+    XRROutputPropertyNotifyEvent *rr_output_property_notify;
 
     switch (ev->type - g_rr_event_base)
     {
@@ -213,6 +217,45 @@ process_randr(XEvent *ev)
                    DisplayWidth(g_disp, g_screenNumber),
                    DisplayHeight(g_disp, g_screenNumber));
             break;
+        case RRNotify:
+            rr_notify_event = (XRRNotifyEvent *) ev;
+            printf("process_randr: RRNotify window 0x%8.8x\n", (int)rr_notify_event->window);
+            switch (rr_notify_event->subtype)
+            {
+                case RRNotify_CrtcChange:
+                    rr_crtc_change_notify = (XRRCrtcChangeNotifyEvent *) ev;
+                    printf("process_randr: RRNotify_CrtcChange crtc 0x%4.4x "
+                           "mode 0x%4.4x rotation 0x%4.4x x %d y %d "
+                           "width %d height %d\n",
+                           (int)rr_crtc_change_notify->crtc,
+                           (int)rr_crtc_change_notify->mode,
+                           (int)rr_crtc_change_notify->rotation,
+                           rr_crtc_change_notify->x, rr_crtc_change_notify->y,
+                           rr_crtc_change_notify->width, rr_crtc_change_notify->height);
+                    break;
+                case RRNotify_OutputChange:
+                    rr_output_change_notify = (XRROutputChangeNotifyEvent *) ev;
+                    printf("process_randr: RRNotify_OutputChange output 0x%4.4x crtc 0x%4.4x "
+                           "mode 0x%4.4x rotation 0x%4.4x connection 0x%4.4x "
+                           "subpixel_order 0x%4.4x\n",
+                           (int)rr_output_change_notify->output,
+                           (int)rr_output_change_notify->crtc,
+                           (int)rr_output_change_notify->mode,
+                           (int)rr_output_change_notify->rotation,
+                           (int)rr_output_change_notify->connection,
+                           (int)rr_output_change_notify->subpixel_order);
+                    break;
+                case RRNotify_OutputProperty:
+                    rr_output_property_notify = (XRROutputPropertyNotifyEvent *) ev;
+                    printf("process_randr: RRNotify_OutputProperty output 0x%4.4x "
+                           "property 0x%8.8x timestamp 0x%8.8x state %d\n",
+                           (int)rr_output_property_notify->output,
+                           (int)rr_output_property_notify->property,
+                           (int)rr_output_property_notify->timestamp,
+                           rr_output_property_notify->state);
+                    break;
+            }
+            break;
     }
     return 0;
 }
@@ -225,8 +268,8 @@ main(int argc, char **argv)
     int width;
     int height;
 
-    g_disp = XOpenDisplay(0);
-    if (g_disp == 0)
+    g_disp = XOpenDisplay(NULL);
+    if (g_disp == NULL)
     {
         printf("error opening display\n");
         return 1;
@@ -260,7 +303,9 @@ main(int argc, char **argv)
     printf("client randr version major %d minor %d\n", RANDR_MAJOR, RANDR_MINOR);
     XRRQueryVersion(g_disp, &g_ver_maj, &g_ver_min);
     printf("server randr version major %d minor %d\n", g_ver_maj, g_ver_min);
-    XRRSelectInput(g_disp, g_win, RRScreenChangeNotifyMask);
+    XRRSelectInput(g_disp, g_win, RRScreenChangeNotifyMask |
+                   RRCrtcChangeNotifyMask | RROutputChangeNotifyMask |
+                   RROutputPropertyNotifyMask);
     printf("click in window to dump RANDR info\n");
     for (;;)
     {
